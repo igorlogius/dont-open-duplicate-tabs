@@ -3,6 +3,8 @@ const temporary = browser.runtime.id.endsWith('@temporary-addon');
 const manifest = browser.runtime.getManifest();
 const extname = manifest.name;
 
+let isActiv = true;
+
 function log() {
 	if(arguments.length < 2){
 		throw 'invalid number of arguments';
@@ -22,27 +24,82 @@ async function getFromStorage(type,id) {
 	return (typeof tmp[id] === type) ? tmp[id] : false;
 }
 
-async function onCreatedNaviTarget(details) {
-
-	const targetUrl = details.url;
-	const targetTabId = details.tabId;
-	const tabs = await browser.tabs.query({});
+async function onUpdated(tabId, changeInfo, tabInfo) {
 
 
-	const focus = await getFromStorage('boolean','focus');
+	if(!isActiv) { 
+		return; 
+	}
+	if(typeof changeInfo.url !== 'string' ) {
+		return;
+	}
+
+	const selectors = await ((async () => {
+		try {
+			const tmp = await browser.storage.local.get('selectors');
+			if(typeof tmp['selectors'] !== 'undefined') {
+				return tmp['selectors'];
+			}
+		}catch(e){
+			log('error',e.toString());
+		}
+		return [];
+	})());
+
+	const targetUrl = changeInfo.url;
+	const targetTabId = tabId;
+
 	const notify = await getFromStorage('boolean','notify');
+	let message = '';
+
+
+	for(const selector of selectors) {
+
+		try {
+			if(typeof selector.activ === 'boolean'
+				&& selector.activ === true
+				&& typeof selector.url_regex === 'string'
+				&& selector.url_regex !== ''
+				&& (new RegExp(selector.url_regex)).test(tabInfo.url) 
+			){
+
+				message = 'whitelist, RegularExpression: ' + selector.url_regex + '\n matched with target url: ' + tabInfo.url
+				//log('debug', message);
+
+				if(notify) {
+
+					browser.notifications.create(extname + targetTabId, {
+						"type": "basic",
+						"iconUrl": browser.runtime.getURL("icon.png"),
+						"title": extname, 
+						"message":  message
+					});
+				}
+				return; 
+			}
+		}catch(e){
+			log('error',e.toString());
+		}
+	}
+
+	const tabs = await browser.tabs.query({});
+	const focus = await getFromStorage('boolean','focus');
 
 	for(const tab of tabs) {
+
 		if(tab.id !== targetTabId 
-			&& tab.url === targetUrl) {
-			const message = `tab with url ${targetUrl} exists\nSwitching is set to ${focus}`;
-			log('debug', message);
+			&& tab.url === targetUrl
+		) {
+			message = `tab with url: \n ${targetUrl} \n exists and focus is set to ${focus}`;
+			//log('debug', message);
+
 
 			if(focus) {
-				await browser.windows.update(tab.windowId, {focused: true});
-				await browser.tabs.update(tab.id, {active:true});
+				browser.windows.update(tab.windowId, {focused: true});
+				browser.tabs.update(tab.id, {active:true});
 			}
-			await browser.tabs.remove(targetTabId);
+
+			browser.tabs.remove(targetTabId);
 
 			if(notify) {
 				browser.notifications.create(extname + targetTabId, {
@@ -55,7 +112,24 @@ async function onCreatedNaviTarget(details) {
 			return;
 		}
 	}
+	//log('debug', 'no duplicate found for' + targetUrl);
 }
 
-browser.webNavigation.onCreatedNavigationTarget.addListener(onCreatedNaviTarget);
 
+browser.browserAction.setBadgeBackgroundColor({color: "green"})
+browser.browserAction.setBadgeText({"text": "on"}); 
+
+
+browser.tabs.onUpdated.addListener(onUpdated, { properties: ["status"] });
+browser.browserAction.onClicked.addListener((tab) => {
+
+	isActiv = (!isActiv);
+	//log('debug', `isActiv set to ${isActiv}`);
+	if(isActiv){
+		browser.browserAction.setBadgeText({"text": "on"}); 
+		browser.browserAction.setBadgeBackgroundColor({color: "green"});
+	}else{
+		browser.browserAction.setBadgeText({"text": "off"}); 
+		browser.browserAction.setBadgeBackgroundColor({color: "red"});
+	}
+});
