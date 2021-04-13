@@ -24,13 +24,14 @@ async function getFromStorage(type,id) {
 	return (typeof tmp[id] === type) ? tmp[id] : false;
 }
 
-async function onUpdated(tabId, changeInfo, tabInfo) {
+//async function onUpdated(tabId, changeInfo, tabInfo) {
+async function onCreatedNaviTarget(details) {
 
 
 	if(!isActiv) { 
 		return; 
 	}
-	if(typeof changeInfo.url !== 'string' ) {
+	if(typeof details.url !== 'string' ) {
 		return;
 	}
 
@@ -46,8 +47,8 @@ async function onUpdated(tabId, changeInfo, tabInfo) {
 		return [];
 	})());
 
-	const targetUrl = changeInfo.url;
-	const targetTabId = tabId;
+	const targetUrl = details.url;
+	const targetTabId = details.tabId;
 
 	const notify = await getFromStorage('boolean','notify');
 	let message = '';
@@ -60,10 +61,10 @@ async function onUpdated(tabId, changeInfo, tabInfo) {
 				&& selector.activ === true
 				&& typeof selector.url_regex === 'string'
 				&& selector.url_regex !== ''
-				&& (new RegExp(selector.url_regex)).test(tabInfo.url) 
+				&& (new RegExp(selector.url_regex)).test(targetUrl) 
 			){
 
-				message = 'whitelist, RegularExpression: ' + selector.url_regex + '\n matched with target url: ' + tabInfo.url
+				message = `whitelist, RegEx:\n${selector.url_regex}\n matched with target url:\n${targetUrl}`
 				//log('debug', message);
 
 				if(notify) {
@@ -90,15 +91,15 @@ async function onUpdated(tabId, changeInfo, tabInfo) {
 		if(tab.id !== targetTabId 
 			&& tab.url === targetUrl
 		) {
-			message = `tab with url: \n ${targetUrl} \n exists and focus is set to ${focus}`;
+			message = `tab with url:\n${targetUrl}\nexists and focus is set to ${focus}`;
 			//log('debug', message);
-
 
 			if(focus) {
 				browser.windows.update(tab.windowId, {focused: true});
 				browser.tabs.update(tab.id, {active:true});
 			}
 
+			// close duplicate tab
 			browser.tabs.remove(targetTabId);
 
 			if(notify) {
@@ -120,7 +121,10 @@ browser.browserAction.setBadgeBackgroundColor({color: "green"})
 browser.browserAction.setBadgeText({"text": "on"}); 
 
 
-browser.tabs.onUpdated.addListener(onUpdated, { properties: ["status"] });
+//browser.tabs.onUpdated.addListener(onUpdated, { properties: ["status"] });
+
+browser.webNavigation.onCreatedNavigationTarget.addListener(onCreatedNaviTarget);
+
 browser.browserAction.onClicked.addListener((tab) => {
 
 	isActiv = (!isActiv);
