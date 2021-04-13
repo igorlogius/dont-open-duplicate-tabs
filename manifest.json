@@ -1,0 +1,21 @@
+{
+  "author": "igorlogius",
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "description": "Prevent the creation of a newtab with an url, which is already opened",
+  "manifest_version": 2,
+  "name": "dontDupTab",
+  "options_ui": {
+    "page": "options.html"
+  },
+  "permissions": [
+    "notifications",
+    "webNavigation",
+    "storage",
+    "tabs"
+  ],
+  "version": "0.1.0"
+}
