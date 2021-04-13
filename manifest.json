@@ -6,6 +6,9 @@
     ]
   },
   "description": "Prevent the creation of a newtab with an url, which is already opened",
+  "icons": {
+	  "128": "icon.png"
+  },
   "manifest_version": 2,
   "name": "dontDupTab",
   "options_ui": {
@@ -17,5 +20,5 @@
     "storage",
     "tabs"
   ],
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
