@@ -6,14 +6,13 @@
     ]
   },
   "browser_action": {
-  	"default_title": "toggle dontOpenDupTab"
   },
-  "description": "Prevent opening of tabs with the same target url ",
+  "description": "Prevent opening of tabs with the same target url",
   "icons": {
 	  "128": "icon.png"
   },
   "manifest_version": 2,
-  "name": "dontOpenDupTab",
+  "name": "Dont Open Duplicate Tabs",
   "options_ui": {
     "page": "options.html"
   },
@@ -23,5 +22,5 @@
     "webNavigation",
     "tabs"
   ],
-  "version": "0.2.2"
+  "version": "1.0.0"
 }

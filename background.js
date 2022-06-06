@@ -1,5 +1,6 @@
+/* global browser */
 
-const temporary = browser.runtime.id.endsWith('@temporary-addon'); 
+const temporary = browser.runtime.id.endsWith('@temporary-addon');
 const manifest = browser.runtime.getManifest();
 const extname = manifest.name;
 
@@ -28,8 +29,8 @@ async function getFromStorage(type,id) {
 async function onCreatedNaviTarget(details) {
 
 
-	if(!isActiv) { 
-		return; 
+	if(!isActiv) {
+		return;
 	}
 	if(typeof details.url !== 'string' ) {
 		return;
@@ -61,7 +62,7 @@ async function onCreatedNaviTarget(details) {
 				&& selector.activ === true
 				&& typeof selector.url_regex === 'string'
 				&& selector.url_regex !== ''
-				&& (new RegExp(selector.url_regex)).test(targetUrl) 
+				&& (new RegExp(selector.url_regex)).test(targetUrl)
 			){
 
 				message = `whitelist, RegEx:\n${selector.url_regex}\n matched with target url:\n${targetUrl}`
@@ -72,11 +73,11 @@ async function onCreatedNaviTarget(details) {
 					browser.notifications.create(extname + targetTabId, {
 						"type": "basic",
 						"iconUrl": browser.runtime.getURL("icon.png"),
-						"title": extname, 
+						"title": extname,
 						"message":  message
 					});
 				}
-				return; 
+				return;
 			}
 		}catch(e){
 			log('error',e.toString());
@@ -88,7 +89,7 @@ async function onCreatedNaviTarget(details) {
 
 	for(const tab of tabs) {
 
-		if(tab.id !== targetTabId 
+		if(tab.id !== targetTabId
 			&& tab.url === targetUrl
 		) {
 			message = `tab with url:\n${targetUrl}\nexists and focus is set to ${focus}`;
@@ -106,8 +107,8 @@ async function onCreatedNaviTarget(details) {
 				browser.notifications.create(extname + targetTabId, {
 					"type": "basic",
 					"iconUrl": browser.runtime.getURL("icon.png"),
-					"title": extname, 
-					"message": message 
+					"title": extname,
+					"message": message
 				});
 			}
 			return;
@@ -118,22 +119,22 @@ async function onCreatedNaviTarget(details) {
 
 
 browser.browserAction.setBadgeBackgroundColor({color: "green"})
-browser.browserAction.setBadgeText({"text": "on"}); 
+browser.browserAction.setBadgeText({"text": "on"});
 
 
 //browser.tabs.onUpdated.addListener(onUpdated, { properties: ["status"] });
 
 browser.webNavigation.onCreatedNavigationTarget.addListener(onCreatedNaviTarget);
 
-browser.browserAction.onClicked.addListener((tab) => {
+browser.browserAction.onClicked.addListener((/*tab*/) => {
 
 	isActiv = (!isActiv);
 	//log('debug', `isActiv set to ${isActiv}`);
 	if(isActiv){
-		browser.browserAction.setBadgeText({"text": "on"}); 
+		browser.browserAction.setBadgeText({"text": "on"});
 		browser.browserAction.setBadgeBackgroundColor({color: "green"});
 	}else{
-		browser.browserAction.setBadgeText({"text": "off"}); 
+		browser.browserAction.setBadgeText({"text": "off"});
 		browser.browserAction.setBadgeBackgroundColor({color: "red"});
 	}
 });

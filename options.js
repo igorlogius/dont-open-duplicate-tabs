@@ -1,6 +1,5 @@
 
 function onChange(evt) {
-
 	id = evt.target.id;
 	el = document.getElementById(id);
 
@@ -9,7 +8,6 @@ function onChange(evt) {
 	obj[id] = value;
 
 	browser.storage.local.set(obj);
-
 }
 
 [ "focus", "notify" ].map( (id) => {
@@ -78,7 +76,7 @@ function collectConfig() {
 	// collect configuration from DOM
 	var mainTableBody = document.getElementById('mainTableBody');
 	var feeds = [];
-	for (var row = 0; row < mainTableBody.rows.length; row++) { 
+	for (var row = 0; row < mainTableBody.rows.length; row++) {
 		try {
 			var url_regex = mainTableBody.rows[row].querySelector('.url_regex').value.trim();
 			var check = mainTableBody.rows[row].querySelector('.activ').checked;
@@ -145,8 +143,6 @@ expbtn.addEventListener('click', async function (evt) {
     var dl = document.createElement('a');
     var res = await browser.storage.local.get('selectors');
     var content = JSON.stringify(res.selectors);
-    //console.log(content);
-    //	return;
     dl.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(content));
     dl.setAttribute('download', 'data.json');
     dl.setAttribute('visibility', 'hidden');
@@ -162,22 +158,16 @@ impbtnWrp.addEventListener('click', function(evt) {
 })
 
 impbtn.addEventListener('input', function (evt) {
-	
 	var file  = this.files[0];
-
-	//console.log(file.name);
-	
 	var reader = new FileReader();
-	        reader.onload = async function(e) {
-            try {
-                var config = JSON.parse(reader.result);
-		//console.log("impbtn", config);
-		await browser.storage.local.set({ 'selectors': config});
-		document.querySelector("form").submit();
-            } catch (e) {
-                console.error('error loading file: ' + e);
-            }
-        };
-        reader.readAsText(file);
-
+	reader.onload = async function(e) {
+        try {
+            var config = JSON.parse(reader.result);
+            await browser.storage.local.set({ 'selectors': config});
+		    document.querySelector("form").submit();
+        } catch (e) {
+            console.error('error loading file: ' + e);
+        }
+    };
+    reader.readAsText(file);
 });
