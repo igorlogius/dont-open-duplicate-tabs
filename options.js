@@ -1,7 +1,8 @@
+/* global browser */
 
 function onChange(evt) {
-	id = evt.target.id;
-	el = document.getElementById(id);
+	const id = evt.target.id;
+	let el = document.getElementById(id);
 
 	let value = ( (el.type === 'checkbox') ? el.checked : el.value)
 	let obj = {}
@@ -14,8 +15,8 @@ function onChange(evt) {
 
 	browser.storage.local.get(id).then( (obj) => {
 
-		el = document.getElementById(id);
-		val = obj[id];
+		let el = document.getElementById(id);
+		let val = obj[id];
 
 		if(typeof val !== 'undefined') {
 			if(el.type === 'checkbox') {
@@ -25,9 +26,9 @@ function onChange(evt) {
 			}
 		}
 
-	}).catch( (err) => {} );
+	}).catch(console.error);
 
-	el = document.getElementById(id);
+	let el = document.getElementById(id);
 	el.addEventListener('click', onChange);
 });
 
@@ -54,7 +55,7 @@ function createTableRow(feed) {
 
 		}else
 			if( key !== 'action'){
-				var input = document.createElement('input');
+				input = document.createElement('input');
 				input.className = key;
 				input.placeholder = key;
 				input.style.width = '100%';
@@ -111,14 +112,12 @@ function createButton(text, id, callback, submit) {
 	return span;
 }
 
-async function saveOptions(e) {
+async function saveOptions() {
 	var feeds = collectConfig();
-	console.log(feeds);
 	await browser.storage.local.set({ 'selectors': feeds });
 }
 
 async function restoreOptions() {
-	var mainTableBody = document.getElementById('mainTableBody');
 	createTableRow({
 		'activ': 1,
 		'url_regex': '',
@@ -139,7 +138,7 @@ const impbtnWrp = document.getElementById('impbtn_wrapper');
 const impbtn = document.getElementById('impbtn');
 const expbtn = document.getElementById('expbtn');
 
-expbtn.addEventListener('click', async function (evt) {
+expbtn.addEventListener('click', async function () {
     var dl = document.createElement('a');
     var res = await browser.storage.local.get('selectors');
     var content = JSON.stringify(res.selectors);
@@ -153,18 +152,18 @@ expbtn.addEventListener('click', async function (evt) {
 });
 
 // delegate to real Import Button which is a file selector
-impbtnWrp.addEventListener('click', function(evt) {
+impbtnWrp.addEventListener('click', function() {
 	impbtn.click();
 })
 
-impbtn.addEventListener('input', function (evt) {
+impbtn.addEventListener('input', function () {
 	var file  = this.files[0];
 	var reader = new FileReader();
-	reader.onload = async function(e) {
+	reader.onload = async function() {
         try {
             var config = JSON.parse(reader.result);
             await browser.storage.local.set({ 'selectors': config});
-		    document.querySelector("form").submit();
+            document.querySelector("form").submit();
         } catch (e) {
             console.error('error loading file: ' + e);
         }
