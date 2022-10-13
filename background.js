@@ -20,9 +20,9 @@ function log() {
 	}
 }
 
-async function getFromStorage(type,id) {
+async function getFromStorage(type,id, fallback) {
 	let tmp = await browser.storage.local.get(id);
-	return (typeof tmp[id] === type) ? tmp[id] : false;
+	return (typeof tmp[id] === type) ? tmp[id] : fallback;
 }
 
 //async function onUpdated(tabId, changeInfo, tabInfo) {
@@ -51,7 +51,7 @@ async function onCreatedNaviTarget(details) {
 	const targetUrl = details.url;
 	const targetTabId = details.tabId;
 
-	const notify = await getFromStorage('boolean','notify');
+	const notify = await getFromStorage('boolean','notify', true);
 	let message = '';
 
 
@@ -85,7 +85,7 @@ async function onCreatedNaviTarget(details) {
 	}
 
 	const tabs = await browser.tabs.query({});
-	const focus = await getFromStorage('boolean','focus');
+	const focus = await getFromStorage('boolean','focus', false);
 
 	for(const tab of tabs) {
 
