@@ -16,10 +16,10 @@
     "page": "options.html"
   },
   "permissions": [
+    "cookies",
     "notifications",
     "storage",
-    "webNavigation",
     "tabs"
   ],
-  "version": "1.0.2"
+  "version": "1.2.2"
 }

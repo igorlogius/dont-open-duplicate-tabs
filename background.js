@@ -3,21 +3,27 @@
 const temporary = browser.runtime.id.endsWith('@temporary-addon');
 const manifest = browser.runtime.getManifest();
 const extname = manifest.name;
+const resetTime = 1*60*1000;
 
+let resetTID;
 let isActiv = true;
 
-function log() {
-	if(arguments.length < 2){
-		throw 'invalid number of arguments';
-	}
-	const level = arguments[0].trim().toLowerCase();
-	let msg = '';
-	for (let i=1; i < arguments.length; i++) {
-		msg = msg + arguments[i];
-	}
-	if (['error','warn'].includes(level) || ( temporary && ['debug','info','log'].includes(level))) {
-		console[level]('[' + extname + '] [' + level.toUpperCase() + '] ' + msg);
-	}
+let setFocus = false;
+let doNotify = true;
+let onlyWithOpener = true;
+let ignoreContainer = false;
+
+function notify(title, message = "", iconUrl = "icon.png") {
+	if(doNotify) {
+        return browser.notifications.create(""+Date.now(),
+            {
+               "type": "basic"
+                ,iconUrl
+                ,title
+                ,message
+            }
+        );
+    }
 }
 
 async function getFromStorage(type,id, fallback) {
@@ -25,17 +31,20 @@ async function getFromStorage(type,id, fallback) {
 	return (typeof tmp[id] === type) ? tmp[id] : fallback;
 }
 
-//async function onUpdated(tabId, changeInfo, tabInfo) {
-async function onCreatedNaviTarget(details) {
+async function onTabUpdated(tabId, changeInfo, tabInfo) {
 
-
+	if(typeof changeInfo.url !== 'string' ) {
+		return;
+	}
 	if(!isActiv) {
 		return;
 	}
-	if(typeof details.url !== 'string' ) {
+	if(! /^https?:\/\//.test(changeInfo.url) ) {
 		return;
 	}
-
+    if(onlyWithOpener && isNaN(tabInfo.openerTabId) ){
+       return;
+    }
 	const selectors = await ((async () => {
 		try {
 			const tmp = await browser.storage.local.get('selectors');
@@ -43,98 +52,86 @@ async function onCreatedNaviTarget(details) {
 				return tmp['selectors'];
 			}
 		}catch(e){
-			log('error',e.toString());
+            console.error(e);
 		}
 		return [];
 	})());
 
-	const targetUrl = details.url;
-	const targetTabId = details.tabId;
-
-	const notify = await getFromStorage('boolean','notify', true);
-	let message = '';
-
+	const targetUrl = changeInfo.url;
+	const targetTabId = tabId;
 
 	for(const selector of selectors) {
 
 		try {
-			if(typeof selector.activ === 'boolean'
+			if(    typeof selector.activ === 'boolean'
 				&& selector.activ === true
 				&& typeof selector.url_regex === 'string'
 				&& selector.url_regex !== ''
 				&& (new RegExp(selector.url_regex)).test(targetUrl)
 			){
-
-				message = `whitelist, RegEx:\n${selector.url_regex}\n matched with target url:\n${targetUrl}`
-				//log('debug', message);
-
-				if(notify) {
-
-					browser.notifications.create(extname + targetTabId, {
-						"type": "basic",
-						"iconUrl": browser.runtime.getURL("icon.png"),
-						"title": extname,
-						"message":  message
-					});
-				}
+                notify(extname, `whitelist, RegEx:\n${selector.url_regex}\n matched with target url:\n${targetUrl}`);
 				return;
 			}
 		}catch(e){
-			log('error',e.toString());
+            console.error(e);
 		}
 	}
 
 	const tabs = await browser.tabs.query({});
-	const focus = await getFromStorage('boolean','focus', false);
 
 	for(const tab of tabs) {
-
-		if(tab.id !== targetTabId
-			&& tab.url === targetUrl
-		) {
-			message = `tab with url:\n${targetUrl}\nexists and focus is set to ${focus}`;
-			//log('debug', message);
-
-			if(focus) {
+		if(   tab.id  !== targetTabId
+		   && tab.url === targetUrl
+           && ( (tab.cookieStoreId === tabInfo.cookieStoreId) || ignoreContainer )
+        )
+        {
+			if(setFocus) {
 				browser.windows.update(tab.windowId, {focused: true});
 				browser.tabs.update(tab.id, {active:true});
 			}
-
 			// close duplicate tab
+			notify(extname, `tab with url:\n${targetUrl}\nexists and focus is set to ${setFocus}`);
 			browser.tabs.remove(targetTabId);
-
-			if(notify) {
-				browser.notifications.create(extname + targetTabId, {
-					"type": "basic",
-					"iconUrl": browser.runtime.getURL("icon.png"),
-					"title": extname,
-					"message": message
-				});
-			}
-			return;
+			return; // done
 		}
 	}
-	//log('debug', 'no duplicate found for' + targetUrl);
 }
 
-
-browser.browserAction.setBadgeBackgroundColor({color: "green"})
-browser.browserAction.setBadgeText({"text": "on"});
-
-
-//browser.tabs.onUpdated.addListener(onUpdated, { properties: ["status"] });
-
-browser.webNavigation.onCreatedNavigationTarget.addListener(onCreatedNaviTarget);
-
-browser.browserAction.onClicked.addListener((/*tab*/) => {
-
+function onBAClicked() {
 	isActiv = (!isActiv);
-	//log('debug', `isActiv set to ${isActiv}`);
+    clearTimeout(resetTID);
 	if(isActiv){
 		browser.browserAction.setBadgeText({"text": "on"});
 		browser.browserAction.setBadgeBackgroundColor({color: "green"});
 	}else{
 		browser.browserAction.setBadgeText({"text": "off"});
 		browser.browserAction.setBadgeBackgroundColor({color: "red"});
+
+        resetTID = setTimeout( () => {
+            if(!isActive){
+                isActive = true;
+                browser.browserAction.setBadgeText({"text": "on"});
+                browser.browserAction.setBadgeBackgroundColor({color: "green"});
+            }
+        }, resetTime); // reset after
 	}
-});
+}
+
+async function onStorageChanged() {
+	setFocus = await getFromStorage('boolean','focus', false);
+	doNotify = await getFromStorage('boolean','notify', true);
+	onlyWithOpener = await getFromStorage('boolean','opener', true);
+	ignoreContainer = await getFromStorage('boolean','container', false);
+}
+
+// setup
+(async ()=>{
+    browser.browserAction.setBadgeBackgroundColor({color: "green"})
+    browser.browserAction.setBadgeText({"text": "on"});
+    await onStorageChanged();
+})();
+
+// register listeners
+browser.tabs.onUpdated.addListener(onTabUpdated, {urls: ['<all_urls>'], properties: ['url']});
+browser.browserAction.onClicked.addListener(onBAClicked);
+browser.storage.onChanged.addListener(onStorageChanged);
