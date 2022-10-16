@@ -1,6 +1,5 @@
 /* global browser */
 
-const temporary = browser.runtime.id.endsWith('@temporary-addon');
 const manifest = browser.runtime.getManifest();
 const extname = manifest.name;
 const resetTime = 1*60*1000;
@@ -12,6 +11,7 @@ let setFocus = false;
 let doNotify = true;
 let onlyWithOpener = true;
 let ignoreContainer = false;
+let ignoreDiscarded = false;
 
 function notify(title, message = "", iconUrl = "icon.png") {
 	if(doNotify) {
@@ -31,17 +31,21 @@ async function getFromStorage(type,id, fallback) {
 	return (typeof tmp[id] === type) ? tmp[id] : fallback;
 }
 
-async function onTabUpdated(tabId, changeInfo, tabInfo) {
+async function onBeforeNavigate(details) {
 
-	if(typeof changeInfo.url !== 'string' ) {
-		return;
-	}
+
 	if(!isActiv) {
 		return;
 	}
-	if(! /^https?:\/\//.test(changeInfo.url) ) {
+
+	if(! /^https?:\/\//.test(details.url) ) {
 		return;
 	}
+    const tabInfo = await browser.tabs.get(details.tabId);
+
+    const targetUrl = details.url;
+    const targetTabId = details.tabId;
+
     if(onlyWithOpener && isNaN(tabInfo.openerTabId) ){
        return;
     }
@@ -57,8 +61,6 @@ async function onTabUpdated(tabId, changeInfo, tabInfo) {
 		return [];
 	})());
 
-	const targetUrl = changeInfo.url;
-	const targetTabId = tabId;
 
 	for(const selector of selectors) {
 
@@ -77,12 +79,18 @@ async function onTabUpdated(tabId, changeInfo, tabInfo) {
 		}
 	}
 
-	const tabs = await browser.tabs.query({});
+    let query = {};
+    query['hidden'] = false;
+    if(ignoreDiscarded){
+        query['discarded'] = false;
+    }
+    console.debug(query);
+	const tabs = await browser.tabs.query(query);
 
 	for(const tab of tabs) {
 		if(   tab.id  !== targetTabId
-		   && tab.url === targetUrl
-           && ( (tab.cookieStoreId === tabInfo.cookieStoreId) || ignoreContainer )
+            && tab.url === targetUrl
+            && ( (tab.cookieStoreId === tabInfo.cookieStoreId) || ignoreContainer )
         )
         {
 			if(setFocus) {
@@ -108,8 +116,8 @@ function onBAClicked() {
 		browser.browserAction.setBadgeBackgroundColor({color: "red"});
 
         resetTID = setTimeout( () => {
-            if(!isActive){
-                isActive = true;
+            if(!isActiv){
+                isActiv = true;
                 browser.browserAction.setBadgeText({"text": "on"});
                 browser.browserAction.setBadgeBackgroundColor({color: "green"});
             }
@@ -122,6 +130,7 @@ async function onStorageChanged() {
 	doNotify = await getFromStorage('boolean','notify', true);
 	onlyWithOpener = await getFromStorage('boolean','opener', true);
 	ignoreContainer = await getFromStorage('boolean','container', false);
+	ignoreDiscarded = await getFromStorage('boolean','discarded', false);
 }
 
 // setup
@@ -132,6 +141,6 @@ async function onStorageChanged() {
 })();
 
 // register listeners
-browser.tabs.onUpdated.addListener(onTabUpdated, {urls: ['<all_urls>'], properties: ['url']});
+browser.webNavigation.onCompleted.addListener(onBeforeNavigate);
 browser.browserAction.onClicked.addListener(onBAClicked);
 browser.storage.onChanged.addListener(onStorageChanged);
