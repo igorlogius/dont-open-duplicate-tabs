@@ -3,6 +3,7 @@ With a couple of options, like to switching to the already opened tab.
 
 <b>Usage:</b>
 After installation, open the option page and check/uncheck the options you want.
+
 <b>Notes: </b>
 <ol>
 	<li>
@@ -25,3 +26,4 @@ After installation, open the option page and check/uncheck the options you want.
 		If you have any (e.g. a site it does not work but you think it should) or have improvement suggestions or feature request please open an issue at the "Support site".
 	</li>
 </ol>
+
