@@ -11,12 +11,18 @@
 	<span> <input type="checkbox" id="container" />ignore container (find duplicates in different containers)</span>
 	<span> <input type="checkbox" id="discarded" />ignore discarded </span>
 	<div>
+    <p>Ignore Tabs with URLs matching the following Regular Expresions</p>
 	<form id="mainForm" accept-charset="utf-8">
-		<input type="submit" value="Save all changes" />
-		<input id="impbtn_wrapper" type="button" name="impbtn" value="Import Rules" />
+		<input type="submit" value="Save Changes" />
+		<input id="impbtn_wrapper" type="button" name="impbtn" value="Import Matchers" />
 		<input id="impbtn" type="file" name="impbtn" value="" style="display:none" />
-		<input id="expbtn" type="button" name="impbtn" value="Export Rules" />
+		<input id="expbtn" type="button" name="impbtn" value="Export Matchers" />
 		<table id="mainTable" border=1 style="width:100%;" >
+            <thead>
+                <th>Enable</th>
+                <th>Regular Expression Matchers</th>
+                <th>Actions</th>
+            </thead>
 			<tbody id='mainTableBody' />
 		</table>
 	</form>
