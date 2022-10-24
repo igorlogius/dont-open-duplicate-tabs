@@ -34,7 +34,6 @@ async function getFromStorage(type,id, fallback) {
 
 async function onBeforeNavigate(details) {
 
-
     if(!isActiv) {
         return;
     }
@@ -47,6 +46,7 @@ async function onBeforeNavigate(details) {
     const targetUrl = details.url;
     const targetTabId = details.tabId;
     const targetWinId = tabInfo.windowId;
+    const targetActiv = tabInfo.active;
 
     if(onlyWithOpener && isNaN(tabInfo.openerTabId) ){
        return;
@@ -95,10 +95,6 @@ async function onBeforeNavigate(details) {
             && ( (tab.cookieStoreId === tabInfo.cookieStoreId) || ignoreContainer )
         )
         {
-            if(setFocus) {
-                browser.windows.update(tab.windowId, {focused: true});
-                browser.tabs.update(tab.id, {active:true});
-            }
             // close duplicate tab
             notify(extname, `tab with url:\n${targetUrl}\nexists and focus is set to ${setFocus}`);
             if(closeOldTab){
@@ -108,7 +104,7 @@ async function onBeforeNavigate(details) {
                 }
                 browser.tabs.remove(tab.id);
             }else{
-                if(setFocus) {
+                if(setFocus || targetActiv) {
                     browser.windows.update(tab.windowId, {focused: true});
                     browser.tabs.update(tab.id, {active:true});
                 }
