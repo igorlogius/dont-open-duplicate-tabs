@@ -3,6 +3,8 @@
 const manifest = browser.runtime.getManifest();
 const extname = manifest.name;
 const resetTime = 1*60*1000;
+const newtaburl = 'about:newtab';
+const hometaburl = 'about:home';
 
 let resetTID;
 let isActiv = true;
@@ -13,6 +15,8 @@ let onlyWithOpener = true;
 let ignoreContainer = false;
 let ignoreDiscarded = false;
 let closeOldTab = false;
+let ignoreAbout = false;
+let ignorePinned = true;
 
 function notify(title, message = "", iconUrl = "icon.png") {
     if(doNotify) {
@@ -86,7 +90,10 @@ async function onBeforeNavigate(details) {
     if(ignoreDiscarded){
         query['discarded'] = false;
     }
-    console.debug(query);
+    if(ignorePinned) {
+        query['pinned'] = false;
+    }
+    //console.debug(query);
     const tabs = await browser.tabs.query(query);
 
     for(const tab of tabs) {
@@ -110,7 +117,7 @@ async function onBeforeNavigate(details) {
                 }
                 browser.tabs.remove(targetTabId);
             }
-            return; // done
+            return; // done  , if multiple exists ... well that means some where created while off ... lets be nice and not kill everything at once
         }
     }
 }
@@ -142,6 +149,37 @@ async function onStorageChanged() {
     ignoreContainer = await getFromStorage('boolean','container', false);
     ignoreDiscarded = await getFromStorage('boolean','discarded', false);
     closeOldTab = await getFromStorage('boolean','closeOldTab', false);
+    ignoreAbout = await getFromStorage('boolean','ignoreAbout', false);
+    ignorePinned = await getFromStorage('boolean','ignorePinned', true);
+}
+
+// remove duplicate about:newtab in a window
+async function onTabActivated(info){
+
+    if(!isActiv) {
+        return;
+    }
+
+    if(ignoreAbout){
+        return;
+    }
+
+    let query = {
+        windowId: info.windowId,
+        url: [ newtaburl, hometaburl ]
+    };
+
+    if(ignorePinned) {
+        query['pinned'] = false;
+    }
+
+    const about_newtabIds = (await browser.tabs.query(query)).sort( (a,b) => (b.lastAccessed - a.lastAccessed)).map( t => t.id );
+
+    if(about_newtabIds.length > 0){
+        // lastAccessed tab  should be the activated one, so we dont need loops here *yay*
+        about_newtabIds.splice(0,1);
+        browser.tabs.remove(about_newtabIds);
+    }
 }
 
 // setup
@@ -155,3 +193,4 @@ async function onStorageChanged() {
 browser.webNavigation.onCompleted.addListener(onBeforeNavigate);
 browser.browserAction.onClicked.addListener(onBAClicked);
 browser.storage.onChanged.addListener(onStorageChanged);
+browser.tabs.onActivated.addListener(onTabActivated);
