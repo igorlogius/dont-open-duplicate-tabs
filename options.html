@@ -5,17 +5,23 @@
     <title>options</title>
 </head>
 <body>
-	<span> <input type="checkbox" id="focus" />set focus to tab</span>
-	<span> <input type="checkbox" id="notify" checked />show notification</span>
-	<span> <input type="checkbox" id="opener" checked />with opener (ignore tabs opened from bookmarks,history or external)</span>
-	<span> <input type="checkbox" id="container" />ignore container (find duplicates in different containers)</span>
-	<span> <input type="checkbox" id="discarded" />ignore discarded </span>
-	<span> <input type="checkbox" id="closeOldTab" />close old tabs (keep the newly opened ones)</span>
-	<span> <input type="checkbox" id="ignoreAbout" />ignore about:newtab and about:home (allows to have multiple of these open)</span>
-	<span> <input type="checkbox" id="ignorePinned" checked />ignore pinned tabs (pinned tabs will not be touched)</span>
-	<span> <input type="checkbox" id="wlistNotify" checked />show notifications for whitelist matches (uncheck to disable notifications for whitelist matches)</span>
+    <fieldset>
+        <legend>Duplicate detection</legend>
+        <span> <input type="checkbox" id="opener" checked />ignore tabs without opener (bookmarks,history and external)</span><br/>
+        <span> <input type="checkbox" id="container" />ignore container bounds</span><br/>
+        <span> <input type="checkbox" id="closeOldTab" />keep new tab and close old ones</span><br/>
+        <span> <input type="checkbox" id="ignoreAbout" />ignore about:newtab + about:home </span><br/>
+        <span> <input type="checkbox" id="discarded" />ignore discarded</span><br/>
+        <span> <input type="checkbox" id="ignorePinned" checked />ignore pinned</span><br/>
+    </fieldset>
+    <fieldset>
+        <legend>Focus & Notifications</legend>
+	    <span> <input type="checkbox" id="focus" />change focus to existing tab</span><br/>
+	    <span> <input type="checkbox" id="notify" checked />show notifications</span><br/>
+    	<span> <input type="checkbox" id="wlistNotify" checked />show notifications for whitelist</span><br/>
+    </fieldset>
 	<div>
-    <p>Ignore Tabs with URLs matching the following Regular Expresions</p>
+    <p>Ignore Tabs with URLs matching the following Regular Expression</p>
 	<form id="mainForm" accept-charset="utf-8">
 		<input type="submit" value="Save Changes" />
 		<input id="impbtn_wrapper" type="button" name="impbtn" value="Import Matchers" />

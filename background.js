@@ -6,18 +6,22 @@ const resetTime = 1*60*1000;
 const newtaburl = 'about:newtab';
 const hometaburl = 'about:home';
 
-let resetTID;
+let resetTimerId;
 let isActiv = true;
 
 let setFocus = false;
 let doNotify = true;
-let onlyWithOpener = true;
+
 let ignoreContainer = false;
 let ignoreDiscarded = false;
 let closeOldTab = false;
 let ignoreAbout = false;
+
+let onlyWithOpener = true;
 let ignorePinned = true;
 let wlistNotify = true;
+
+let allowedDups = new Set();
 
 function notify(title, message = "", iconUrl = "icon.png") {
     if(doNotify) {
@@ -37,97 +41,60 @@ async function getFromStorage(type,id, fallback) {
     return (typeof tmp[id] === type) ? tmp[id] : fallback;
 }
 
-async function onBeforeNavigate(details) {
+//async function onBeforeNavigate(details) {
+async function onTabUpdated(tabId, changeInfo, tabInfo) {
+
+    if(typeof changeInfo.url !== 'string'){
+        return;
+    }
 
     if(!isActiv) {
         return;
     }
 
-    if(! /^https?:\/\//.test(details.url) ) {
+    if(allowedDups.has(tabId)){
         return;
     }
-    const tabInfo = await browser.tabs.get(details.tabId);
 
-    const targetUrl = details.url;
-    const targetTabId = details.tabId;
-    const targetWinId = tabInfo.windowId;
-    const targetActiv = tabInfo.active;
+    //const tabInfo = await browser.tabs.get(details.tabId);
+
 
     if(onlyWithOpener && isNaN(tabInfo.openerTabId) ){
        return;
     }
-    const selectors = await ((async () => {
-        try {
-            const tmp = await browser.storage.local.get('selectors');
-            if(typeof tmp['selectors'] !== 'undefined') {
-                return tmp['selectors'];
-            }
-        }catch(e){
-            console.error(e);
+
+    if(await isWhitelisted(tabInfo)){
+        if(wlistNotify){
+            notify(extname, `created tab ${tabInfo.url} matches whitelist`);
         }
-        return [];
-    })());
-
-
-    for(const selector of selectors) {
-
-        try {
-            if(    typeof selector.activ === 'boolean'
-                && selector.activ === true
-                && typeof selector.url_regex === 'string'
-                && selector.url_regex !== ''
-                && (new RegExp(selector.url_regex)).test(targetUrl)
-            ){
-                if(wlistNotify) {
-                    notify(extname, `whitelist, RegEx:\n${selector.url_regex}\n matched with target url:\n${targetUrl}`);
-                }
-                return;
-            }
-        }catch(e){
-            console.error(e);
-        }
+        return;
     }
 
-    let query = {};
-    query['hidden'] = false;
-    if(ignoreDiscarded){
-        query['discarded'] = false;
-    }
-    if(ignorePinned) {
-        query['pinned'] = false;
-    }
-    //console.debug(query);
-    const tabs = await browser.tabs.query(query);
+    const dups = await getDups(tabInfo);
 
-    for(const tab of tabs) {
-        if(   tab.id  !== targetTabId
-            && tab.url === targetUrl
-            && ( (tab.cookieStoreId === tabInfo.cookieStoreId) || ignoreContainer )
-        )
-        {
-            // close duplicate tab
-            notify(extname, `tab with url:\n${targetUrl}\nexists and focus is set to ${setFocus}`);
-            if(closeOldTab){
-                if(setFocus) {
-                    browser.windows.update(targetWinId, {focused: true});
-                    browser.tabs.update(targetTabId, {active:true});
-                }
-                browser.tabs.remove(tab.id);
-            }else{
-                if(setFocus || targetActiv) {
-                    browser.windows.update(tab.windowId, {focused: true});
-                    browser.tabs.update(tab.id, {active:true});
-                }
-                browser.tabs.remove(targetTabId);
-            }
-            return; // done  , if multiple exists ... well that means some where created while off ... lets be nice and not kill everything at once
+    if(dups.length < 1){
+        return;
+    }
+
+    if(closeOldTab){
+        if(setFocus) {
+            browser.tabs.update(tabInfo.id, {active:true});
         }
+        browser.tabs.remove(dups);
+        notify(extname, `removed ${dups.length} old duplicate\n${tabInfo.url}`);
+    }else{
+        //browser.tabs.remove(dups.slice(1));
+        browser.tabs.remove(tabInfo.id);
+        if(setFocus) {
+            browser.tabs.update(dups[0], {active:true});
+        }
+        notify(extname, `removed new duplicate\n${tabInfo.url}`);
     }
 }
 
 function onBAClicked() {
     isActiv = (!isActiv);
-    clearTimeout(resetTID);
+    clearTimeout(resetTimerId);
     if(isActiv){
         browser.browserAction.setBadgeText({"text": "on"});
         browser.browserAction.setBadgeBackgroundColor({color: "green"});
@@ -135,7 +102,7 @@ function onBAClicked() {
         browser.browserAction.setBadgeText({"text": "off"});
         browser.browserAction.setBadgeBackgroundColor({color: "red"});
 
-        resetTID = setTimeout( () => {
+        resetTimerId = setTimeout( () => {
             if(!isActiv){
                 isActiv = true;
                 browser.browserAction.setBadgeText({"text": "on"});
@@ -157,32 +124,127 @@ async function onStorageChanged() {
     wlistNotify = await getFromStorage('boolean','wlistNotify', false);
 }
 
-// remove duplicate about:newtab in a window
-async function onTabActivated(info){
+async function isWhitelisted(url){
 
-    if(!isActiv) {
-        return;
-    }
+    const selectors = await ((async () => {
+        try {
+            const tmp = await browser.storage.local.get('selectors');
+            if(typeof tmp['selectors'] !== 'undefined') {
+                return tmp['selectors'];
+            }
+        }catch(e){
+            console.error(e);
+        }
+        return [];
+    })());
 
-    if(ignoreAbout){
-        return;
+    for(const selector of selectors) {
+        try {
+            if(    typeof selector.activ === 'boolean'
+                && selector.activ === true
+                && typeof selector.url_regex === 'string'
+                && selector.url_regex !== ''
+                && (new RegExp(selector.url_regex)).test(url)
+            ){
+                return true;
+            }
+        }catch(e){
+            console.error(e);
+        }
     }
+    return false;
+}
+
+async function getDups(check_tab){
+
+    const dups = [];
 
     let query = {
-        windowId: info.windowId,
-        url: [ newtaburl, hometaburl ]
+        windowId: check_tab.windowId,
+        hidden: false
     };
-
+    if(ignoreDiscarded){
+        query['discarded'] = false;
+    }
     if(ignorePinned) {
         query['pinned'] = false;
     }
 
-    const about_newtabIds = (await browser.tabs.query(query)).sort( (a,b) => (b.lastAccessed - a.lastAccessed)).map( t => t.id );
+    const consideredTabs = (await browser.tabs.query(query)).sort( (a,b) => (b.lastAccessed - a.lastAccessed));
 
-    if(about_newtabIds.length > 0){
-        // lastAccessed tab  should be the activated one, so we dont need loops here *yay*
-        about_newtabIds.splice(0,1);
-        browser.tabs.remove(about_newtabIds);
+    for(const tab of consideredTabs) {
+        if(    tab.id  !== check_tab.id
+            && tab.url === check_tab.url
+            && ( (tab.cookieStoreId === check_tab.cookieStoreId) || ignoreContainer )
+        ){
+            dups.push(tab.id);
+        }
+    }
+    return dups;
+}
+
+browser.menus.create({
+    title: 'Force Duplicate Tabs',
+    contexts: ["tab"],
+    onclick: async (info, tab) => {
+        // check if multiple tabs in this window are highlighted
+        const tabIds = (await browser.tabs.query({highlighted: true, currentWindow: true})).map( t => t.id);
+        if(tabIds.includes(tab.id)){
+            for(const tId of tabIds){
+                let dup = await browser.tabs.duplicate(tId,{index: tab.index+1});
+                allowedDups.add(dup.id);
+            }
+            setTimeout( () => {
+                for(const tId of tabIds){
+                    if(allowedDups.has(tId)){
+                        allowedDups.delete(tId);
+                    }
+                }
+            },1000*60); // 30 seconds grace period
+        }else{
+                let dup = await browser.tabs.duplicate(tab.id, {index: tab.index+1});
+                allowedDups.add(dup.id);
+            setTimeout( () => {
+                    if(allowedDups.has(dup.id)){
+                        allowedDups.delete(dup.id);
+                    }
+            },1000*60); // 30 seconds grace period
+
+        }
+    }
+});
+
+function onTabRemoved (tabId) {
+    if(allowedDups.has(tabId)){
+        allowedDups.delete(tabId);
+    }
+}
+
+async function onTabCreated(tab) {
+    if(!ignoreAbout){
+        if(tab.status === 'complete' && (newtaburl === tab.url  || hometaburl === tab.url)){
+
+            const dups = await getDups(tab);
+
+            if(dups.length < 1){
+                return;
+            }
+
+            if(closeOldTab){
+                if(setFocus) {
+                    browser.tabs.update(tab.id, {active:true});
+                }
+                browser.tabs.remove(dups);
+                notify(extname, `removed ${dups.length} old duplicates\n${tab.url}`);
+            }else{
+                //browser.tabs.remove(dups.slice(1));
+                browser.tabs.remove(tab.id);
+                if(setFocus) {
+                    browser.tabs.update(dups[0], {active:true});
+                }
+                notify(extname, `removed new duplicate\n${tab.url}`);
+            }
+        }
     }
 }
 
@@ -194,7 +256,9 @@ async function onTabActivated(info){
 })();
 
 // register listeners
-browser.webNavigation.onCompleted.addListener(onBeforeNavigate);
+browser.tabs.onCreated.addListener(onTabCreated);
+browser.tabs.onUpdated.addListener(onTabUpdated, {properties: ['url']});
 browser.browserAction.onClicked.addListener(onBAClicked);
 browser.storage.onChanged.addListener(onStorageChanged);
-browser.tabs.onActivated.addListener(onTabActivated);
+browser.tabs.onRemoved.addListener(onTabRemoved);
+
