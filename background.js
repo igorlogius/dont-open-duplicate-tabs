@@ -17,6 +17,7 @@ let ignoreDiscarded = false;
 let closeOldTab = false;
 let ignoreAbout = false;
 let ignorePinned = true;
+let wlistNotify = true;
 
 function notify(title, message = "", iconUrl = "icon.png") {
     if(doNotify) {
@@ -77,7 +78,9 @@ async function onBeforeNavigate(details) {
                 && selector.url_regex !== ''
                 && (new RegExp(selector.url_regex)).test(targetUrl)
             ){
-                notify(extname, `whitelist, RegEx:\n${selector.url_regex}\n matched with target url:\n${targetUrl}`);
+                if(wlistNotify) {
+                    notify(extname, `whitelist, RegEx:\n${selector.url_regex}\n matched with target url:\n${targetUrl}`);
+                }
                 return;
             }
         }catch(e){
@@ -151,6 +154,7 @@ async function onStorageChanged() {
     closeOldTab = await getFromStorage('boolean','closeOldTab', false);
     ignoreAbout = await getFromStorage('boolean','ignoreAbout', false);
     ignorePinned = await getFromStorage('boolean','ignorePinned', true);
+    wlistNotify = await getFromStorage('boolean','wlistNotify', false);
 }
 
 // remove duplicate about:newtab in a window
