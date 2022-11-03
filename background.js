@@ -58,16 +58,15 @@ async function onTabUpdated(tabId, changeInfo, tabInfo) {
 
     //const tabInfo = await browser.tabs.get(details.tabId);
 
-
-    if(onlyWithOpener && isNaN(tabInfo.openerTabId) ){
-       return;
-    }
-
-    if(await isWhitelisted(tabInfo)){
+    if(await isWhitelisted(tabInfo.url)){
         if(wlistNotify){
             notify(extname, `created tab ${tabInfo.url} matches whitelist`);
         }
         return;
+    }
+
+    if(onlyWithOpener && isNaN(tabInfo.openerTabId) ){
+       return;
     }
 
     const dups = await getDups(tabInfo);
@@ -121,7 +120,7 @@ async function onStorageChanged() {
     closeOldTab = await getFromStorage('boolean','closeOldTab', false);
     ignoreAbout = await getFromStorage('boolean','ignoreAbout', false);
     ignorePinned = await getFromStorage('boolean','ignorePinned', true);
-    wlistNotify = await getFromStorage('boolean','wlistNotify', false);
+    wlistNotify = await getFromStorage('boolean','wlistNotify', true);
 }
 
 async function isWhitelisted(url){
