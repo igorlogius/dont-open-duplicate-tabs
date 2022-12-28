@@ -21,7 +21,9 @@
     	<span> <input type="checkbox" id="wlistNotify" checked />show notifications for whitelist</span><br/>
     </fieldset>
 	<div>
-    <p>Ignore Tabs with URLs matching the following Regular Expression</p>
+    <fieldset>
+        <legend>Whitelist</legend>
+    <p>Ignore Tabs with URLs matching the following Regular Expressions</p>
 	<form id="mainForm" accept-charset="utf-8">
 		<input type="submit" value="Save Changes" />
 		<input id="impbtn_wrapper" type="button" name="impbtn" value="Import Matchers" />
@@ -37,6 +39,7 @@
 		</table>
 		<div><b>Note:</b> After editing or deleting entries click "Save Changes" to make the changes persistent</div>
 	</form>
+    </fieldset>
     <script src="options.js"></script>
 </body>
 </html>
