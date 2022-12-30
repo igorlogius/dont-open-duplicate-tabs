@@ -1,5 +1,6 @@
 {
   "author": "igorlogius",
+  "homepage_url": "https://github.com/igorlogius/dont-open-duplicate-tabs",
   "background": {
     "scripts": [
       "background.js"
@@ -22,5 +23,5 @@
     "storage",
     "tabs"
   ],
-  "version": "1.7.7"
+  "version": "1.7.8"
 }

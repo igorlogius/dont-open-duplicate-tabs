@@ -2,11 +2,9 @@
 
 const manifest = browser.runtime.getManifest();
 const extname = manifest.name;
-const resetTime = 1*60*1000;
 const newtaburl = 'about:newtab';
 const hometaburl = 'about:home';
 
-let resetTimerId;
 let isActiv = true;
 
 let setFocus = false;
@@ -93,21 +91,12 @@ async function onTabUpdated(tabId, changeInfo, tabInfo) {
 
 function onBAClicked() {
     isActiv = (!isActiv);
-    clearTimeout(resetTimerId);
     if(isActiv){
         browser.browserAction.setBadgeText({"text": "on"});
         browser.browserAction.setBadgeBackgroundColor({color: "green"});
     }else{
         browser.browserAction.setBadgeText({"text": "off"});
         browser.browserAction.setBadgeBackgroundColor({color: "red"});
-
-        resetTimerId = setTimeout( () => {
-            if(!isActiv){
-                isActiv = true;
-                browser.browserAction.setBadgeText({"text": "on"});
-                browser.browserAction.setBadgeBackgroundColor({color: "green"});
-            }
-        }, resetTime); // reset after
     }
 }
 
