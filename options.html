@@ -1,45 +1,35 @@
 <!DOCTYPE html>
-<html>
 <head>
-    <meta charset="utf-8"></meta>
-    <title>options</title>
+	<meta charset="utf-8"></meta>
+	<title>options</title>
 </head>
 <body>
-    <fieldset>
-        <legend>Duplicate detection</legend>
-        <span> <input type="checkbox" id="opener" checked />ignore tabs without opener (bookmarks,history and external)</span><br/>
-        <span> <input type="checkbox" id="container" />ignore container bounds</span><br/>
-        <span> <input type="checkbox" id="closeOldTab" />keep new tab and close old ones</span><br/>
-        <span> <input type="checkbox" id="ignoreAbout" />ignore about:newtab + about:home </span><br/>
-        <span> <input type="checkbox" id="discarded" />ignore discarded</span><br/>
-        <span> <input type="checkbox" id="ignorePinned" checked />ignore pinned</span><br/>
-    </fieldset>
-    <fieldset>
-        <legend>Focus and Notifications</legend>
-	    <span> <input type="checkbox" id="focus" />change focus to existing tab</span><br/>
-	    <span> <input type="checkbox" id="notify" checked />show notifications</span><br/>
-    	<span> <input type="checkbox" id="wlistNotify" checked />show notifications for whitelist</span><br/>
-    </fieldset>
+	<fieldset>
+		<legend>When duplicate is detected ... </legend>
+		<span> <input type="checkbox" id="closeOld" /> .. keep new tab and close old ones</span><br/>
+		<span> <input type="checkbox" id="setFocus" /> .. change focus to existing tab</span><br/>
+		<span> <input type="checkbox" id="rmNotify" checked /> .. show remove notifications</span><br/>
+		<span> <input type="checkbox" id="wlNotify" checked /> .. show whitelist match notifications</span><br/>
+	</fieldset>
 	<div>
-    <fieldset>
-        <legend>Whitelist</legend>
-    <p>Ignore Tabs with URLs matching the following Regular Expressions</p>
-	<form id="mainForm" accept-charset="utf-8">
-		<input type="submit" value="Save Changes" />
-		<input id="impbtn_wrapper" type="button" name="impbtn" value="Import Matchers" />
-		<input id="impbtn" type="file" name="impbtn" value="" style="display:none" />
-		<input id="expbtn" type="button" name="impbtn" value="Export Matchers" />
-		<table id="mainTable" border=1 style="width:100%;" >
-            <thead>
-                <th>Enable</th>
-                <th>Regular Expression Matchers</th>
-                <th>Actions</th>
-            </thead>
-			<tbody id='mainTableBody' />
-		</table>
-		<div><b>Note:</b> After editing or deleting entries click "Save Changes" to make the changes persistent</div>
-	</form>
-    </fieldset>
-    <script src="options.js"></script>
+		<fieldset>
+			<legend>Whitelist</legend>
+			<p>Ignore Tabs with URLs matching the following Regular Expressions</p>
+			<form id="mainForm" accept-charset="utf-8">
+				<input type="submit" value="Save Changes" />
+				<input id="impbtn_wrapper" type="button" name="impbtn" value="Import Matchers" />
+				<input id="impbtn" type="file" name="impbtn" value="" style="display:none" />
+				<input id="expbtn" type="button" name="impbtn" value="Export Matchers" />
+				<table id="mainTable" border=1 style="width:100%;" >
+					<thead>
+						<th>Enable</th>
+						<th>Regular Expression Matchers</th>
+						<th>Actions</th>
+					</thead>
+					<tbody id='mainTableBody' />
+				</table>
+				<div><b>Note:</b>After editing or deleting click on "Save Changes"</div>
+			</form>
+		</fieldset>
+		<script src="options.js"></script>
 </body>
-</html>

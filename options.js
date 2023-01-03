@@ -11,7 +11,7 @@ function onChange(evt) {
 	browser.storage.local.set(obj);
 }
 
-[ "wlistNotify", "ignoreAbout", "ignorePinned", "closeOldTab", "discarded", "container", "opener", "focus", "notify" ].map( (id) => {
+[ "wlNotify", "setFocus", "rmNotify", "closeOld" ].map( (id) => {
 
 	browser.storage.local.get(id).then( (obj) => {
 
