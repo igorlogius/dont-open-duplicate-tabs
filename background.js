@@ -8,7 +8,6 @@ let isActiv = true;
 
 let setFocus = false;
 let rmNotify = true;
-let wlNotify = true;
 let closeOld = false;
 let selectors = [];
 
@@ -47,7 +46,6 @@ async function onStorageChanged() {
     closeOld = await getFromStorage('boolean','closeOld', false);
     setFocus = await getFromStorage('boolean','setFocus', false);
     rmNotify = await getFromStorage('boolean','rmNotify', true);
-    wlNotify = await getFromStorage('boolean','wlNotify', true);
     selectors = await getFromStorage('object','selectors', []);
 }
 
@@ -94,9 +92,6 @@ async function getDups(check_tab){
 	return dups;
 }
 
-
-
-
 async function doStuff(tabId){
 
 	if(allowedDups.has(tabId)){
@@ -105,17 +100,15 @@ async function doStuff(tabId){
 
 	const tab = await browser.tabs.get(tabId);
 
-
-	if(await isWhitelisted(tab.url)){
-		if(wlNotify){
-			notify(extname, `created tab ${tab.url} matches whitelist`);
-		}
-		return;
-	}
-
 	const dups = await getDups(tab);
 
 	if(dups.length < 1){
+		// no duplicats => end 
+		return;
+	}
+
+	if(await isWhitelisted(tab.url)){
+		// is whitelisted => end
 		return;
 	}
 
@@ -137,7 +130,7 @@ async function doStuff(tabId){
 			notify(extname, `removed new duplicate\n${tab.url}`);
 		}
 	}
-
+	
 }
 
 async function onTabUpdated(tabId, changeInfo) {
@@ -147,7 +140,7 @@ async function onTabUpdated(tabId, changeInfo) {
 	if(!isActiv) {
 		return;
 	}
-	if(typeof changeInfo.url === 'string' ){
+	if(typeof changeInfo.url === 'string' && changeInfo.url !== ''){
 		setTimeout( async () => {
 			doStuff(tabId);
 		}, delayTime);
