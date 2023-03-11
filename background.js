@@ -116,13 +116,13 @@ async function doStuff(tabId){
 		if(setFocus) {
 			browser.tabs.update(tab.id, {active:true});
 		}
-		browser.tabs.remove(dups);
+		await browser.tabs.remove(dups);
 		if(rmNotify) {
 			notify(extname, `removed ${dups.length} old duplicate\n${tab.url}`);
 		}
 	}else{
 		//browser.tabs.remove(dups.slice(1));
-		browser.tabs.remove(tab.id);
+		await browser.tabs.remove(tab.id);
 		if(setFocus) {
 			browser.tabs.update(dups[0], {active:true});
 		}
@@ -193,6 +193,18 @@ browser.menus.create({
             },1000*30); // grace period
         }
     }
+});
+
+browser.menus.create({
+    title: 'Remove Duplicate Tabs',
+    contexts: ["tab"],
+    onclick: async (info, tab) => {
+        // check if multiple tabs in this window are highlighted
+        const tabIds = (await browser.tabs.query({currentWindow: true, pinned:false})).map( t => t.id);
+	    for(const tabId of tabIds){
+			await doStuff(tabId);
+	    }
+	}
 });
 
 // setup
