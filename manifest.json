@@ -2,26 +2,19 @@
   "author": "igorlogius",
   "homepage_url": "https://github.com/igorlogius/dont-open-duplicate-tabs",
   "background": {
-    "scripts": [
-      "background.js"
-    ]
+    "scripts": ["background.js"]
   },
   "browser_action": {
+    "default_area": "navbar"
   },
   "icons": {
-	  "128": "icon.png"
+    "128": "icon.png"
   },
   "manifest_version": 2,
   "name": "Dont Open Duplicate Tabs",
   "options_ui": {
     "page": "options.html"
   },
-  "permissions": [
-    "menus",
-    "cookies",
-    "notifications",
-    "storage",
-    "tabs"
-  ],
-  "version": "1.8.11"
+  "permissions": ["menus", "cookies", "notifications", "storage", "tabs"],
+  "version": "1.8.12"
 }

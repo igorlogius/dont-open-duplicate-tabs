@@ -10,6 +10,7 @@ let setFocus = false;
 let rmNotify = true;
 let closeOld = false;
 let selectors = [];
+let allWindows = false;
 
 let allowedDups = new Set();
 
@@ -47,6 +48,7 @@ async function onStorageChanged() {
   closeOld = await getFromStorage("boolean", "closeOld", false);
   setFocus = await getFromStorage("boolean", "setFocus", false);
   rmNotify = await getFromStorage("boolean", "rmNotify", true);
+  allWindows = await getFromStorage("boolean", "allWindows", true);
   selectors = await getFromStorage("object", "selectors", []);
 }
 
@@ -73,10 +75,13 @@ async function getDups(check_tab) {
   const dups = [];
 
   let query = {
-    windowId: check_tab.windowId,
     hidden: false,
     pinned: false,
   };
+
+  if (!allWindows) {
+    query["windowId"] = check_tab.windowId;
+  }
 
   const consideredTabs = (await browser.tabs.query(query)).sort(
     (a, b) => b.lastAccessed - a.lastAccessed
