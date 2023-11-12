@@ -1,5 +1,11 @@
 Addon, to prevent the opening of tabs with urls, which are already opened.
 
+
+
+https://github.com/igorlogius/dont-open-duplicate-tabs/assets/67047467/03d8ccd4-6dc7-4944-9ca9-b2a4acf8b69c
+
+
+
 <b>Usage/Features:</b>
 <ul>
 	<li>Enable/disable via the toolbar icon</li>
