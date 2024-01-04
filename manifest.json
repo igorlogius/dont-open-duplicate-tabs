@@ -15,6 +15,6 @@
   "options_ui": {
     "page": "options.html"
   },
-  "permissions": ["menus", "cookies", "notifications", "storage", "tabs"],
-  "version": "1.8.12"
+  "permissions": ["cookies", "notifications", "storage", "tabs"],
+  "version": "1.8.13"
 }
