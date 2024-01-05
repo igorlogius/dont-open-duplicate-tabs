@@ -16,5 +16,5 @@
     "page": "options.html"
   },
   "permissions": ["cookies", "notifications", "storage", "tabs"],
-  "version": "1.8.13"
+  "version": "1.8.14"
 }

@@ -185,3 +185,10 @@ browser.tabs.onUpdated.addListener(onTabUpdated, { properties: ["url"] });
 browser.tabs.onRemoved.addListener(onTabRemoved);
 browser.browserAction.onClicked.addListener(onBAClicked);
 browser.storage.onChanged.addListener(onStorageChanged);
+
+// show the user the options page on first installation
+browser.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "install") {
+    browser.runtime.openOptionsPage();
+  }
+});
