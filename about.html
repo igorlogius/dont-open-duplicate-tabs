@@ -1,4 +1,4 @@
-Addon, to prevent the opening of tabs with urls, which are already opened.
+Addon, to prevent the opening of tabs with urls, which are already opened (in the same context)
 
 <b>Short Demo Video:</b>
 
