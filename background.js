@@ -33,7 +33,35 @@ async function getFromStorage(type, id, fallback) {
   return typeof tmp[id] === type ? tmp[id] : fallback;
 }
 
-function onBAClicked() {
+async function onBAClicked(tab, clickdata, c) {
+  if (clickdata.button === 1) {
+    // check if multiple tabs in this window are highlighted
+    const tabIds = (
+      await browser.tabs.query({ highlighted: true, currentWindow: true })
+    ).map((t) => t.id);
+    if (tabIds.includes(tab.id)) {
+      for (const tId of tabIds) {
+        let dup = await browser.tabs.duplicate(tId, { index: tab.index + 1 });
+        allowedDups.add(dup.id);
+      }
+      setTimeout(() => {
+        for (const tId of tabIds) {
+          if (allowedDups.has(tId)) {
+            allowedDups.delete(tId);
+          }
+        }
+      }, 1000 * 30); // grace period
+    } else {
+      let dup = await browser.tabs.duplicate(tab.id, { index: tab.index + 1 });
+      allowedDups.add(dup.id);
+      setTimeout(() => {
+        if (allowedDups.has(dup.id)) {
+          allowedDups.delete(dup.id);
+        }
+      }, 1000 * 30); // grace period
+    }
+    return;
+  }
   isActiv = !isActiv;
   if (isActiv) {
     browser.browserAction.setBadgeText({ text: "on" });
