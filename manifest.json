@@ -4,6 +4,9 @@
   "background": {
     "scripts": ["background.js"]
   },
+  "commands": {
+    "Force Duplicate Tabs": {}
+  },
   "browser_action": {
     "default_area": "navbar"
   },
@@ -16,5 +19,5 @@
     "page": "options.html"
   },
   "permissions": ["cookies", "notifications", "storage", "tabs"],
-  "version": "1.8.15"
+  "version": "1.8.16"
 }
