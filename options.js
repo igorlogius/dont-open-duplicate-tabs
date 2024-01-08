@@ -11,26 +11,28 @@ function onChange(evt) {
   browser.storage.local.set(obj);
 }
 
-["setFocus", "rmNotify", "closeOld", "allWindows"].map((id) => {
-  browser.storage.local
-    .get(id)
-    .then((obj) => {
-      let el = document.getElementById(id);
-      let val = obj[id];
+["setFocus", "rmNotify", "closeOld", "allWindows", "forceDupInTabContext"].map(
+  (id) => {
+    browser.storage.local
+      .get(id)
+      .then((obj) => {
+        let el = document.getElementById(id);
+        let val = obj[id];
 
-      if (typeof val !== "undefined") {
-        if (el.type === "checkbox") {
-          el.checked = val;
-        } else {
-          el.value = val;
+        if (typeof val !== "undefined") {
+          if (el.type === "checkbox") {
+            el.checked = val;
+          } else {
+            el.value = val;
+          }
         }
-      }
-    })
-    .catch(console.error);
+      })
+      .catch(console.error);
 
-  let el = document.getElementById(id);
-  el.addEventListener("click", onChange);
-});
+    let el = document.getElementById(id);
+    el.addEventListener("click", onChange);
+  }
+);
 
 function deleteRow(rowTr) {
   var mainTableBody = document.getElementById("mainTableBody");

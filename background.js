@@ -11,6 +11,7 @@ let rmNotify = true;
 let closeOld = false;
 let selectors = [];
 let allWindows = false;
+let forceDupInTabContext = false;
 
 let allowedDups = new Set();
 
@@ -80,6 +81,11 @@ async function onStorageChanged() {
   closeOld = await getFromStorage("boolean", "closeOld", false);
   setFocus = await getFromStorage("boolean", "setFocus", false);
   rmNotify = await getFromStorage("boolean", "rmNotify", true);
+  forceDupInTabContext = await getFromStorage(
+    "boolean",
+    "forceDupInTabContext",
+    false
+  );
   allWindows = await getFromStorage("boolean", "allWindows", true);
   selectors = await getFromStorage("object", "selectors", []);
 }
@@ -235,3 +241,24 @@ async function onCommand(cmd) {
 }
 
 browser.commands.onCommand.addListener(onCommand);
+
+const ctxname = "forceDupInTabContext";
+
+browser.menus.create({
+  id: ctxname,
+  title: "Force Duplicate Tabs",
+  contexts: ["tab"],
+  onclick: async (info, tab) => {
+    forceDuplicate(tab);
+  },
+});
+
+browser.menus.onShown.addListener(async (info /*, tab*/) => {
+  console.debug("onShow", forceDupInTabContext);
+  if (forceDupInTabContext) {
+    browser.menus.update(ctxname, { visible: true });
+  } else {
+    browser.menus.update(ctxname, { visible: false });
+  }
+  browser.menus.refresh();
+});
