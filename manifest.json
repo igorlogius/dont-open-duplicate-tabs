@@ -1,15 +1,16 @@
 {
   "author": "igorlogius",
-  "homepage_url": "https://github.com/igorlogius/dont-open-duplicate-tabs",
+  "homepage_url": "https://github.com/igorlogius",
   "background": {
     "scripts": ["background.js"]
-  },
-  "commands": {
-    "Force Duplicate Tabs": {}
   },
   "browser_action": {
     "default_area": "navbar"
   },
+  "commands": {
+    "Force Duplicate Tabs": {}
+  },
+  "description": "Prevent opening tabs with urls, which are already open within the same context",
   "icons": {
     "128": "icon.png"
   },
@@ -19,5 +20,5 @@
     "page": "options.html"
   },
   "permissions": ["menus", "cookies", "notifications", "storage", "tabs"],
-  "version": "1.8.17"
+  "version": "1.8.18"
 }
