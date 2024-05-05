@@ -1,5 +1,7 @@
 Prevent opening tabs with urls, which are already opened within the same context
 
+### [Click here to report a bug, make a suggestion or ask a question](https://github.com/igorlogius/igorlogius/issues/new/choose)
+
 <b>Short Demo Video:</b>
 
 https://github.com/igorlogius/dont-open-duplicate-tabs/assets/67047467/656e5f24-2a54-49d9-abdd-9cddb2ff777a
@@ -11,3 +13,4 @@ https://github.com/igorlogius/dont-open-duplicate-tabs/assets/67047467/656e5f24-
   <li>Option to change focus to already open tab</li>
   <li>Option to disable/enable removal notifications</li>
 </ul>
+
