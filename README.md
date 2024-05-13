@@ -1,6 +1,6 @@
 Prevent opening tabs with urls, which are already opened within the same context
 
-[![](https://github.com/igorlogius/dont-open-duplicate-tabs/assets/67047467/e49ca926-514b-4bd9-bf0d-1763d5257281)](https://addons.mozilla.org/en-US/firefox/addon/dont-open-duplicate-tabs/)
+[![](https://raw.githubusercontent.com/igorlogius/igorlogius/main/geFxAddon.png)](https://addons.mozilla.org/en-US/firefox/addon/dont-open-duplicate-tabs/)
 
 ### [Click here to report a bug, make a suggestion or ask a question](https://github.com/igorlogius/igorlogius/issues/new/choose)
 
