@@ -8,7 +8,7 @@
     "default_area": "navbar"
   },
   "commands": {
-    "Force Duplicate Tabs": {}
+    "Duplicate Tabs": {}
   },
   "description": "Prevent opening tabs with urls, which are already open within the same context",
   "icons": {
@@ -19,6 +19,7 @@
   "options_ui": {
     "page": "options.html"
   },
-  "permissions": ["menus", "cookies", "notifications", "storage", "tabs"],
-  "version": "1.8.18"
+  "permissions": ["menus", "cookies", "storage", "tabs"],
+  "optional_permissions": ["notifications"],
+  "version": "1.8.19"
 }

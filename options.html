@@ -1,71 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <head>
   <meta charset="utf-8" />
   <title>options</title>
 </head>
-<body>
+<body style="padding: 7px">
   <fieldset>
-    <legend>Duplicate Detection will ...</legend>
-    <span>
-      <input type="checkbox" id="allWindows" /> .. considers all windows</span
+    <legend><b>Basic Options</b></legend>
+    <span> <input type="checkbox" id="allWindows" /> Monitor all Windows</span
     ><br />
+    <span> <input type="checkbox" id="closeOld" /> Close Older Tabs</span><br />
+    <span> <input type="checkbox" id="setFocus" /> Switch Focus </span><br />
     <span>
-      <input type="checkbox" id="closeOld" /> .. keep new and close older
-      tabs</span
-    ><br />
-    <span>
-      <input type="checkbox" id="setFocus" /> .. change focus to the existing
-      tab</span
-    ><br />
-    <span>
-      <input type="checkbox" id="rmNotify" checked /> .. show tab remove
-      notifications</span
+      <input
+        type="checkbox"
+        id="rmNotify"
+        name="permission"
+        value="notifications"
+      />
+      Show Notifications</span
     ><br />
   </fieldset>
-  <div>
-    <fieldset>
-      <legend>Whitelist</legend>
-      <p>Ignore Tabs with URLs matching the following Regular Expressions</p>
-      <form id="mainForm" accept-charset="utf-8">
-        <input type="submit" value="Save Changes" />
-        <input
-          id="impbtn_wrapper"
-          type="button"
-          name="impbtn"
-          value="Import Matchers"
-        />
-        <input
-          id="impbtn"
-          type="file"
-          name="impbtn"
-          value=""
-          style="display: none"
-        />
-        <input
-          id="expbtn"
-          type="button"
-          name="impbtn"
-          value="Export Matchers"
-        />
-        <table id="mainTable" border="1" style="width: 100%">
-          <thead>
-            <th>Enable</th>
-            <th>Regular Expression Matchers</th>
-            <th>Actions</th>
-          </thead>
-          <tbody id="mainTableBody" />
-        </table>
-        <div>
-          <b>Note: </b>After editing or deleting click on "Save Changes"
-        </div>
-      </form>
-    </fieldset>
-    <fieldset>
-      <span>
-        <input type="checkbox" id="forceDupInTabContext" /> .. show force
-        duplicate Tab in tab context menu </span
-      ><br />
-    </fieldset>
-    <script src="options.js"></script>
-  </div>
+  <fieldset>
+    <legend><b>Ignore URLs</b></legend>
+    <textarea
+      id="matchers"
+      style="width: 100%; min-height: 20em"
+      placeholder="Enter regular expressions line by line here
+Examples:
+    ^https:\/\/www\.facebook\.com.*
+    ^https:\/\/example\.net.*
+    ^https:\/\/.*\.wikipedia\.org.*
+"
+    ></textarea>
+  </fieldset>
+  <script src="options.js"></script>
 </body>

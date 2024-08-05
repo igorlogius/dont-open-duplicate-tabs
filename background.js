@@ -7,15 +7,41 @@ const delayTime = 2000;
 let isActiv = true;
 
 let setFocus = false;
-let rmNotify = true;
+let rmNotify = false;
 let closeOld = false;
-let selectors = [];
 let allWindows = false;
-let forceDupInTabContext = false;
+let regexList = null;
 
 let allowedDups = new Set();
 
 let ready = false;
+
+async function buildRegExList() {
+  const out = [];
+  (await getFromStorage("string", "matchers", ""))
+    .split("\n")
+    .forEach((line) => {
+      line = line.trim();
+      if (line !== "") {
+        try {
+          out.push(new RegExp(line));
+        } catch (e) {
+          // todo: show a notification that a regex failed to compile ...
+          console.warn(e);
+        }
+      }
+    });
+  return out;
+}
+
+function isOnRegexList(url) {
+  for (let i = 0; i < regexList.length; i++) {
+    if (regexList[i].test(url)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 async function notify(title, message = "", iconUrl = "icon.png") {
   const nid = await browser.notifications.create("" + Date.now(), {
@@ -63,50 +89,22 @@ async function forceDuplicate(tab) {
 }
 
 async function onBAClicked(tab, clickdata, c) {
-  if (clickdata.button === 1) {
-    forceDuplicate(tab);
+  isActiv = !isActiv;
+  if (isActiv) {
+    browser.browserAction.setBadgeText({ text: "on" });
+    browser.browserAction.setBadgeBackgroundColor({ color: "green" });
   } else {
-    isActiv = !isActiv;
-    if (isActiv) {
-      browser.browserAction.setBadgeText({ text: "on" });
-      browser.browserAction.setBadgeBackgroundColor({ color: "green" });
-    } else {
-      browser.browserAction.setBadgeText({ text: "off" });
-      browser.browserAction.setBadgeBackgroundColor({ color: "red" });
-    }
+    browser.browserAction.setBadgeText({ text: "off" });
+    browser.browserAction.setBadgeBackgroundColor({ color: "red" });
   }
 }
 
 async function onStorageChanged() {
   closeOld = await getFromStorage("boolean", "closeOld", false);
   setFocus = await getFromStorage("boolean", "setFocus", false);
-  rmNotify = await getFromStorage("boolean", "rmNotify", true);
-  forceDupInTabContext = await getFromStorage(
-    "boolean",
-    "forceDupInTabContext",
-    false
-  );
+  rmNotify = await getFromStorage("boolean", "rmNotify", false);
   allWindows = await getFromStorage("boolean", "allWindows", true);
-  selectors = await getFromStorage("object", "selectors", []);
-}
-
-async function isWhitelisted(url) {
-  for (const selector of selectors) {
-    try {
-      if (
-        typeof selector.activ === "boolean" &&
-        selector.activ === true &&
-        typeof selector.url_regex === "string" &&
-        selector.url_regex !== "" &&
-        new RegExp(selector.url_regex).test(url)
-      ) {
-        return true;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  return false;
+  regexList = await buildRegExList();
 }
 
 async function getDups(check_tab) {
@@ -122,7 +120,7 @@ async function getDups(check_tab) {
   }
 
   const consideredTabs = (await browser.tabs.query(query)).sort(
-    (a, b) => b.lastAccessed - a.lastAccessed
+    (a, b) => b.lastAccessed - a.lastAccessed,
   );
 
   // this can be put into a filter expression after with the sort statement
@@ -152,7 +150,7 @@ async function doStuff(tabId) {
     return;
   }
 
-  if (await isWhitelisted(tab.url)) {
+  if (isOnRegexList(tab.url)) {
     // is whitelisted => end
     return;
   }
@@ -225,14 +223,30 @@ browser.browserAction.onClicked.addListener(onBAClicked);
 browser.storage.onChanged.addListener(onStorageChanged);
 
 // show the user the options page on first installation
-browser.runtime.onInstalled.addListener((details) => {
+browser.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
     browser.runtime.openOptionsPage();
+  }
+
+  // convert storage data
+  if (details.reason === "update") {
+    let selectors = await getFromStorage("object", "selectors", []);
+
+    out = "";
+    selectors.forEach((e) => {
+      if (typeof e.url_regex === "string") {
+        out = out + e.url_regex + "\n";
+      }
+    });
+
+    if (out !== "") {
+      setToStorage("matchers", out);
+    }
   }
 });
 
 async function onCommand(cmd) {
-  if (cmd === "Force Duplicate Tabs") {
+  if (cmd === "Duplicate Tabs") {
     const tab = (
       await browser.tabs.query({ active: true, currentWindow: true })
     )[0];
@@ -242,23 +256,10 @@ async function onCommand(cmd) {
 
 browser.commands.onCommand.addListener(onCommand);
 
-const ctxname = "forceDupInTabContext";
-
 browser.menus.create({
-  id: ctxname,
-  title: "Force Duplicate Tabs",
+  title: "Duplicate Tabs",
   contexts: ["tab"],
   onclick: async (info, tab) => {
     forceDuplicate(tab);
   },
-});
-
-browser.menus.onShown.addListener(async (info /*, tab*/) => {
-  console.debug("onShow", forceDupInTabContext);
-  if (forceDupInTabContext) {
-    browser.menus.update(ctxname, { visible: true });
-  } else {
-    browser.menus.update(ctxname, { visible: false });
-  }
-  browser.menus.refresh();
 });
