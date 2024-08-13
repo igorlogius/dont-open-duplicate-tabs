@@ -20,6 +20,7 @@ let tabsToCheck = [];
 
 async function tabsLoading() {
   let query = {
+    pinned: false,
     status: "loading",
   };
 
@@ -77,7 +78,11 @@ async function getFromStorage(type, id, fallback) {
 async function forceDuplicate(tab) {
   // check if multiple tabs in this window are highlighted
   const tabIds = (
-    await browser.tabs.query({ highlighted: true, currentWindow: true })
+    await browser.tabs.query({
+      highlighted: true,
+      currentWindow: true,
+      pinned: false,
+    })
   ).map((t) => t.id);
   if (tabIds.includes(tab.id)) {
     for (const tId of tabIds) {
@@ -142,7 +147,8 @@ async function getDups(check_tab) {
     if (
       tab.id !== check_tab.id &&
       tab.url === check_tab.url &&
-      tab.cookieStoreId === check_tab.cookieStoreId
+      tab.cookieStoreId === check_tab.cookieStoreId &&
+      !tab.pinned
     ) {
       dups.push(tab.id);
     }
@@ -163,6 +169,10 @@ async function doStuff(tabId) {
 
   try {
     const tab = await browser.tabs.get(tabId);
+
+    if(tab.pinned){ // ignore pinned tabs
+        return;
+    }
 
     if (tab.status !== "complete") {
       tabsToCheck.push(tabId);
@@ -211,7 +221,6 @@ async function onTabUpdated(tabId, changeInfo) {
   }
   if (typeof changeInfo.url === "string" && changeInfo.url !== "") {
     setTimeout(async () => {
-      //doStuff(tabId);
       tabsToCheck.push(tabId);
     }, delayTime);
   }
@@ -225,7 +234,6 @@ async function onTabCreated(tab) {
     return;
   }
   setTimeout(async () => {
-    //doStuff(tab.id);
     tabsToCheck.push(tab.id);
   }, delayTime);
 }
@@ -277,7 +285,11 @@ browser.runtime.onInstalled.addListener(async (details) => {
 async function onCommand(cmd) {
   if (cmd === "Duplicate Tabs") {
     const tab = (
-      await browser.tabs.query({ active: true, currentWindow: true })
+      await browser.tabs.query({
+        active: true,
+        currentWindow: true,
+        pinned: false,
+      })
     )[0];
     forceDuplicate(tab);
   }
