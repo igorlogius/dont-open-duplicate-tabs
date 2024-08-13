@@ -58,7 +58,7 @@ function isOnRegexList(url) {
 }
 
 async function notify(title, message = "", iconUrl = "icon.png") {
-  const nid = await browser.notifications.create("" + Date.now(), {
+  const nid = await browser.notifications.create(crypto.randomUUID(), {
     type: "basic",
     iconUrl,
     title,
