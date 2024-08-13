@@ -16,6 +16,20 @@ let allowedDups = new Set();
 
 let ready = false;
 
+let tabsToCheck = [];
+
+async function tabsLoading() {
+  let query = {
+    status: "loading",
+  };
+
+  if (!allWindows) {
+    currentWindow: true;
+  }
+  const ret = await browser.tabs.query(query);
+  return ret.length; // at least one tab is still loading
+}
+
 async function buildRegExList() {
   const out = [];
   (await getFromStorage("string", "matchers", ""))
@@ -136,43 +150,56 @@ async function getDups(check_tab) {
   return dups;
 }
 
+async function periodic_doStuff() {
+  while (tabsToCheck.length > 0 && (await tabsLoading()) < 1) {
+    doStuff(tabsToCheck.pop());
+  }
+}
+
 async function doStuff(tabId) {
   if (allowedDups.has(tabId)) {
     return;
   }
 
-  const tab = await browser.tabs.get(tabId);
+  try {
+    const tab = await browser.tabs.get(tabId);
 
-  const dups = await getDups(tab);
+    if (tab.status !== "complete") {
+      tabsToCheck.push(tabId);
+      return;
+    }
 
-  if (dups.length < 1) {
-    // no duplicats => end
-    return;
-  }
+    const dups = await getDups(tab);
 
-  if (isOnRegexList(tab.url)) {
-    // is whitelisted => end
-    return;
-  }
+    if (dups.length < 1) {
+      // no duplicats => end
+      return;
+    }
 
-  if (closeOld) {
-    if (setFocus) {
-      browser.tabs.update(tab.id, { active: true });
+    if (isOnRegexList(tab.url)) {
+      // is whitelisted => end
+      return;
     }
-    await browser.tabs.remove(dups);
-    if (rmNotify) {
-      notify(extname, `removed ${dups.length} old duplicate\n${tab.url}`);
+
+    if (closeOld) {
+      if (setFocus) {
+        browser.tabs.update(tab.id, { active: true });
+      }
+      await browser.tabs.remove(dups);
+      if (rmNotify) {
+        notify(extname, `removed ${dups.length} old duplicate\n${tab.url}`);
+      }
+    } else {
+      //browser.tabs.remove(dups.slice(1));
+      await browser.tabs.remove(tab.id);
+      if (setFocus) {
+        browser.tabs.update(dups[0], { active: true });
+      }
+      if (rmNotify) {
+        notify(extname, `removed new duplicate\n${tab.url}`);
+      }
     }
-  } else {
-    //browser.tabs.remove(dups.slice(1));
-    await browser.tabs.remove(tab.id);
-    if (setFocus) {
-      browser.tabs.update(dups[0], { active: true });
-    }
-    if (rmNotify) {
-      notify(extname, `removed new duplicate\n${tab.url}`);
-    }
-  }
+  } catch (e) {}
 }
 
 async function onTabUpdated(tabId, changeInfo) {
@@ -184,7 +211,8 @@ async function onTabUpdated(tabId, changeInfo) {
   }
   if (typeof changeInfo.url === "string" && changeInfo.url !== "") {
     setTimeout(async () => {
-      doStuff(tabId);
+      //doStuff(tabId);
+      tabsToCheck.push(tabId);
     }, delayTime);
   }
 }
@@ -197,7 +225,8 @@ async function onTabCreated(tab) {
     return;
   }
   setTimeout(async () => {
-    doStuff(tab.id);
+    //doStuff(tab.id);
+    tabsToCheck.push(tab.id);
   }, delayTime);
 }
 
@@ -263,3 +292,5 @@ browser.menus.create({
     forceDuplicate(tab);
   },
 });
+
+setInterval(periodic_doStuff, 10000);
