@@ -8,6 +8,9 @@ Prevent opening tabs with urls, which are already opened within the same context
 
 https://github.com/igorlogius/dont-open-duplicate-tabs/assets/67047467/656e5f24-2a54-49d9-abdd-9cddb2ff777a
 
+
+https://github.com/user-attachments/assets/3ad62695-ef5c-4b3a-9531-de1f0d75b4fa
+
 <b>Usage/Features:</b>
 <ul>
   <li>Enable/disable via the toolbar icon</li>
